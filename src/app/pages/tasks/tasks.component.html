@@ -1,0 +1,144 @@
+<div class="p-tasks">
+  <h1 class="u-visually-hidden">{{ 'TASKS' | translate }}</h1>
+
+  <div class="p-tasks__toolbar">
+    <div class="p-tasks__tabs" role="group" [attr.aria-label]="'FILTER_BY_STATUS' | translate">
+      <button
+        class="p-tasks__tab"
+        [class.is-active]="activeTab() === 'all'"
+        [attr.aria-pressed]="activeTab() === 'all'"
+        (click)="activeTab.set('all')"
+      >
+        {{ 'ALL' | translate }}
+      </button>
+      @for (status of statuses; track status) {
+        <button
+          class="p-tasks__tab"
+          [class.is-active]="activeTab() === status"
+          [attr.aria-pressed]="activeTab() === status"
+          (click)="activeTab.set(status)"
+        >
+          {{ status | uppercase | translate }}
+        </button>
+      }
+    </div>
+
+    <div class="p-tasks__toolbar-actions">
+      <button class="c-button is-outline" [matMenuTriggerFor]="priorityMenu">
+        {{ (selectedPriority() || 'priority') | uppercase | translate }}
+        <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #priorityMenu="matMenu">
+        <button mat-menu-item (click)="selectedPriority.set('')">
+          {{ 'ALL_PRIORITIES' | translate }}
+        </button>
+        @for (priority of priorities; track priority) {
+          <button mat-menu-item (click)="selectedPriority.set(priority)">
+            {{ priority | uppercase | translate }}
+          </button>
+        }
+      </mat-menu>
+
+      <button class="c-button is-outline" [matMenuTriggerFor]="assigneeMenu">
+        <bdi>{{ selectedAssignee()?.name || ('ASSIGNEE' | translate) }}</bdi>
+        <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #assigneeMenu="matMenu">
+        <button mat-menu-item (click)="selectedAssignee.set(null)">
+          {{ 'ALL_ASSIGNEES' | translate }}
+        </button>
+        @for (user of users(); track user.id) {
+          <button mat-menu-item (click)="selectedAssignee.set(user)">
+            <bdi>{{ user.name }}</bdi>
+          </button>
+        }
+      </mat-menu>
+
+      <button class="c-button is-primary" aria-haspopup="dialog" (click)="addTask()">
+        + {{ 'NEW_TASK' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (tasksResource.isLoading() && !tasksResource.hasValue()) {
+    <div class="p-tasks__state" role="status">
+      <mat-spinner diameter="40" [attr.aria-label]="'LOADING_TASKS' | translate" />
+    </div>
+  } @else if (tasksResource.error()) {
+    <div class="p-tasks__state" role="alert" animate.enter="u-fade-in">
+      <p>{{ 'COULD_NOT_LOAD_TASKS' | translate }}</p>
+      <button class="c-button is-primary" (click)="tasksResource.reload()">
+        {{ 'TRY_AGAIN' | translate }}
+      </button>
+    </div>
+  } @else {
+    @if (deleteError()) {
+      <p
+        class="p-tasks__error"
+        role="alert"
+        animate.enter="u-fade-in-up"
+        animate.leave="u-fade-out"
+      >
+        {{ 'COULD_NOT_DELETE_TASK' | translate }}
+      </p>
+    }
+    @if (updateError()) {
+      <p
+        class="p-tasks__error"
+        role="alert"
+        animate.enter="u-fade-in-up"
+        animate.leave="u-fade-out"
+      >
+        {{ 'COULD_NOT_MOVE_TASK' | translate }}
+      </p>
+    }
+
+    <div class="row g-3" cdkDropListGroup>
+      @for (status of statuses; track status) {
+        @if (activeTab() === 'all' || activeTab() === status) {
+          <section
+            class="col-12 col-lg-4"
+            animate.enter="u-fade-in"
+            [attr.aria-labelledby]="'column-' + status"
+          >
+            <div class="p-tasks__column">
+              <div class="p-tasks__column-header">
+                <h2 class="p-tasks__column-title" [id]="'column-' + status">
+                  {{ status | uppercase | translate }}
+                </h2>
+                <span class="c-badge is-count">{{ getTasksByStatus(status).length }}</span>
+              </div>
+
+              <ul
+                class="p-tasks__list"
+                cdkDropList
+                [cdkDropListData]="status"
+                (cdkDropListDropped)="drop($event)"
+              >
+                @for (task of getTasksByStatus(status); track task.id) {
+                  <li
+                    class="p-tasks__card"
+                    [class.is-overdue]="isOverdue(task)"
+                    [animate.leave]="leaveAnimation()"
+                    cdkDrag
+                    [cdkDragData]="task"
+                    (cdkDragStarted)="leaveAnimation.set('')"
+                  >
+                    <app-task-card
+                      [task]="task"
+                      [overdue]="isOverdue(task)"
+                      (edit)="editTask($event)"
+                      (delete)="deleteTask($event)"
+                    />
+                  </li>
+                } @empty {
+                  <li class="p-tasks__empty">{{ 'NO_TASKS' | translate }}</li>
+                }
+              </ul>
+            </div>
+          </section>
+        }
+      }
+    </div>
+  }
+</div>
