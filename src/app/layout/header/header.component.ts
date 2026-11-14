@@ -8,10 +8,10 @@ import {
   signal,
 } from '@angular/core';
 
+import { Directionality } from '@angular/cdk/bidi';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { LanguageService } from '../../core/services/language.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-header',
@@ -21,11 +21,14 @@ import { LanguageService } from '../../core/services/language.service';
   styleUrl: './header.component.scss',
 })
 export class HeaderComponent {
-  language = inject(LanguageService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
+  private directionality = inject(Directionality);
 
   menuOpen = input(false);
   menuClick = output<void>();
+
+  lang = signal(localStorage.getItem('lang') || 'en');
 
   url = signal(this.router.url);
 
@@ -34,6 +37,8 @@ export class HeaderComponent {
   search = computed(() => this.router.parseUrl(this.url()).queryParams['search'] ?? '');
 
   constructor() {
+    this.setLanguage(this.lang());
+
     this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.url.set(event.urlAfterRedirects);
@@ -46,5 +51,19 @@ export class HeaderComponent {
       queryParams: { search: text.trim() || null },
       replaceUrl: true,
     });
+  }
+
+  toggleLanguage(): void {
+    this.setLanguage(this.lang() === 'en' ? 'ar' : 'en');
+  }
+
+  private setLanguage(lang: string): void {
+    this.lang.set(lang);
+    this.translate.use(lang);
+    localStorage.setItem('lang', lang);
+    document.documentElement.lang = lang;
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    this.directionality.valueSignal.set(dir);
   }
 }
