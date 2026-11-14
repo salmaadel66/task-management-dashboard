@@ -4,7 +4,7 @@ A task management dashboard built with **Angular 22**. It uses standalone compon
 
 **Live Demo:** https://salmaadel66.github.io/task-management-dashboard/
 
-> The demo has no real backend. In production builds a mock HTTP interceptor (`mock-backend.interceptor.ts`) serves `moks/db.json` from memory, so create, edit and delete work until the page is reloaded.
+> The demo has no real backend. In production builds a mock HTTP interceptor (`mock-backend.interceptor.ts`) serves `moks/db.json` from memory, and saves every create, edit and delete to `localStorage`, so changes are kept after a reload. Clear the site data to reset the demo.
 
 ---
 
