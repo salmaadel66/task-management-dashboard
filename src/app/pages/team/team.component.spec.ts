@@ -103,7 +103,9 @@ describe('TeamComponent', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.users()).toEqual([sara, omar]);
-    const names = Array.from(el.querySelectorAll('.p-team__name')).map((n) => n.textContent?.trim());
+    const names = Array.from(el.querySelectorAll('.p-team__name')).map((n) =>
+      n.textContent?.trim(),
+    );
     expect(names).toEqual(['Sara', 'Omar']);
   });
 

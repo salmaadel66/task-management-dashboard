@@ -41,11 +41,7 @@ describe('TasksComponent', () => {
   const sara: User = { id: 'u1', name: 'Sara', avatar: 'S', email: '' };
   const omar: User = { id: 'u2', name: 'Omar', avatar: 'O', email: '' };
 
-  const task = (
-    id: string,
-    status: Task['status'],
-    overrides: Partial<Task> = {},
-  ): Task => ({
+  const task = (id: string, status: Task['status'], overrides: Partial<Task> = {}): Task => ({
     id,
     title: `Task ${id}`,
     description: `Description ${id}`,
@@ -101,7 +97,9 @@ describe('TasksComponent', () => {
   });
 
   const columnCounts = () =>
-    Array.from(el.querySelectorAll('.p-tasks__column-header .c-badge')).map((b) => b.textContent?.trim());
+    Array.from(el.querySelectorAll('.p-tasks__column-header .c-badge')).map((b) =>
+      b.textContent?.trim(),
+    );
 
   it('should reload tasks on init', async () => {
     await fixture.whenStable();

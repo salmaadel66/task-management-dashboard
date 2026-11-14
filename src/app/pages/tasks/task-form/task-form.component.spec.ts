@@ -31,7 +31,11 @@ describe('TaskFormComponent', () => {
     completedAt: null,
   };
 
-  const tasks: Task[] = [existing, { ...existing, id: '2', assignee: omar }, { ...existing, id: '3' }];
+  const tasks: Task[] = [
+    existing,
+    { ...existing, id: '2', assignee: omar },
+    { ...existing, id: '3' },
+  ];
 
   const create = async (data: Record<string, unknown>) => {
     await TestBed.configureTestingModule({

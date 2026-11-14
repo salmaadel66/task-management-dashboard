@@ -25,7 +25,7 @@
 
     <div class="p-tasks__toolbar-actions">
       <button class="c-button is-outline" [matMenuTriggerFor]="priorityMenu">
-        {{ (selectedPriority() || 'priority') | uppercase | translate }}
+        {{ selectedPriority() || 'priority' | uppercase | translate }}
         <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
       </button>
       <mat-menu #priorityMenu="matMenu">

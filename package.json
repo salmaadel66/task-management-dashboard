@@ -10,8 +10,8 @@
     "test:coverage": "ng test --watch=false --coverage",
     "server": "json-server --watch moks/db.json --port 3000",
     "dev": "start npm run server && ng serve",
-    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "ng lint",
     "lint:fix": "eslint \"src/**/*.{ts,html}\" --fix",
     "prepare": "husky"
@@ -43,6 +43,7 @@
     "@vitest/coverage-v8": "^5.1.0",
     "angular-eslint": "^22.6.0",
     "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "jsdom": "^30.0.0",
     "json-server": "^1.0.0-beta.15",
@@ -57,7 +58,7 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "src/**/*.scss": [
+    "*.{scss,json,md}": [
       "prettier --write"
     ]
   }

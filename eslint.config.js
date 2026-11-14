@@ -3,6 +3,7 @@ const eslint = require('@eslint/js');
 const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
+const prettier = require('eslint-config-prettier');
 
 module.exports = defineConfig([
   {
@@ -52,4 +53,6 @@ module.exports = defineConfig([
       '@angular-eslint/template/click-events-have-key-events': 'off',
     },
   },
+  // Turn off ESLint rules that would fight with Prettier's formatting.
+  prettier,
 ]);
