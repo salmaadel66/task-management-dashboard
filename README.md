@@ -4,7 +4,7 @@ A task management dashboard built with **Angular 22**. It uses standalone compon
 
 **Live Demo:** https://salmaadel66.github.io/task-management-dashboard/
 
-> The demo API is JSON Server hosted on [Render](https://render.com) (free plan, see `render.yaml`): https://task-dashboard-mock-api.onrender.com. The free service sleeps when idle, so the first request can take up to a minute, and data resets to `moks/db.json` whenever the service restarts.
+> The live demo has no backend server. A mock HTTP interceptor answers the API requests in the browser. See [Live Demo Backend](#live-demo-backend) for everything we tried and why.
 
 ---
 
@@ -57,7 +57,7 @@ The app lets a team create, organize and track tasks on a Kanban-style board, an
 | Layout grid   | Bootstrap 5 (CSS only)       | Grid and spacing utilities, no Bootstrap JavaScript                         |
 | Charts        | ApexCharts (`ng-apexcharts`) | Responsive donut charts with legends out of the box                         |
 | i18n          | ngx-translate                | Switches language at runtime with one build                                 |
-| Mock backend  | JSON Server                  | Real REST endpoints (`POST`, `PUT`, `DELETE`) persisted to `moks/db.json` |
+| Mock backend  | JSON Server                  | Real REST endpoints (`POST`, `PUT`, `DELETE`) persisted to `moks/db.json`   |
 | Unit tests    | Vitest + jsdom               | Default runner of the Angular CLI; fast, Jest-compatible API                |
 | Formatting    | Prettier                     | One formatting standard, with the Angular HTML parser                       |
 
@@ -162,6 +162,47 @@ export const environment = {
 - `apiUrl` is the only place the backend address is defined. Every service builds its URLs from it, so pointing the app at another backend means changing this one value.
 - JSON Server serves `moks/db.json` on port `3000`. It writes changes back to that file, so created and edited tasks stay after a restart. To reset the data, restore the file from git: `git checkout moks/db.json`.
 - The Angular dev server runs on port `4200`.
+
+### Live Demo Backend
+
+GitHub Pages hosts static files only, so the live demo needs its API from somewhere else. Locally the app uses JSON Server, which has no free and reliable hosted equivalent. These are the options we tried and the ones we looked at, in order.
+
+#### What we tried
+
+1. **My JSON Server** (`my-json-server.typicode.com`)
+   - This was the first choice because it serves `db.json` straight from the GitHub repo, with no account and no server to run.
+   - We set `apiUrl` to `https://my-json-server.typicode.com/salmaadel66/task-management-dashboard` and added a minified `db.json` at the repo root (the service only reads that file and limits it to 10 KB).
+   - **Result: not working.** Every request returns `HTTP 530` with Cloudflare `error code: 1016` (origin DNS error). This includes typicode's own demo (`/typicode/demo/posts`) and the service home page, so the outage is on the service side, not in this project. There is no official notice about when, or whether, it will come back.
+   - It also never saved writes: `POST`, `PUT` and `DELETE` get a response but the data does not change.
+
+2. **JSON Server on Render**
+   - We added a `start:api` script (`json-server moks/db.json --host 0.0.0.0`) and a `render.yaml` Blueprint, and switched updates from `PATCH` to `PUT`. We tested every method and CORS locally against a copy of the data.
+   - Creating the service from the Blueprint asked for payment details straight away.
+   - Creating a plain Web Service on the **Free** plan ($0/month) also asked for a card when we clicked Deploy. Render places a temporary $1 authorization to verify the card.
+   - **Result: not working.** The card was declined, so the service was never created. Even if it had been, the free plan sleeps after 15 minutes without traffic (about a minute to wake up) and has no persistent disk, so all changes would be lost on every restart. The paid Starter plan ($7/month) only removes the sleep; saved data would still need an extra paid disk.
+
+3. **Returning the data with RxJS `of()` from the services**
+   - This means replacing the HTTP calls in `TasksService` and `StatisticsService` with `of(data)`.
+   - **Result: rejected**, because the requirements ask for the data to be loaded over HTTP. It would also remove `httpResource`, the cache and retry interceptors, and the real loading and error states, and every component that calls `.reload()`, `.hasValue()` or `.error()` would have to change.
+
+#### Options we looked at but did not use
+
+| Option                                            | Why not                                                                                                   |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Vercel** (JSON Server as a serverless function) | Needs an extra account and extra files. Like Render's free plan, writes are not saved.                    |
+| **MockAPI.io**                                    | Needs an account and has free-plan limits. It generates its own ids, so ids like `task-001` would change. |
+| **FakeAPI, Reqres, JSONPlaceholder**              | No account needed, but they do not save writes, which is the same problem as My JSON Server.              |
+| **angular-in-memory-web-api**                     | Not well maintained, and not confirmed to work with Angular 22.                                           |
+
+#### The solution: a mock HTTP interceptor
+
+Since none of the hosted options worked, the demo uses `mock-backend.interceptor.ts`, which is registered only in production builds (`environment.production`):
+
+- The services still use `HttpClient` and `httpResource`, so the app keeps loading its data over HTTP. Every request still goes through the cache and retry interceptors.
+- The mock interceptor is last in the chain. It answers `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on `/tasks` and `/statistics` from the data in `moks/db.json`, and returns `404` for unknown items. A short delay keeps the loading states visible.
+- Every change is saved to `localStorage`, so created, edited and deleted tasks stay after a reload. To reset the demo, clear the site data in the browser or run `localStorage.removeItem('mock-db')` in the console.
+- In development nothing changes: the interceptor is not registered, and the app talks to JSON Server on `http://localhost:3000`.
+- To move the demo to a real backend later, set `apiUrl` in `environment.prod.ts` and stop registering the interceptor. No service or component needs to change.
 
 ---
 
