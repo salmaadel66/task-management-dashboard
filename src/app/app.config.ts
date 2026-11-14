@@ -3,7 +3,7 @@ import {
   importProvidersFrom,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withViewTransitions } from '@angular/router';
+import { ActivatedRouteSnapshot, provideRouter, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -12,6 +12,11 @@ import { cacheInterceptor } from './core/interceptors/cache.interceptor';
 import { retryInterceptor } from './core/interceptors/retry.interceptor';
 import { mockBackendInterceptor } from './core/interceptors/mock-backend.interceptor';
 import { environment } from './core/environments/environment';
+
+function routePath(route: ActivatedRouteSnapshot): string {
+  const path = route.url.join('/');
+  return route.firstChild ? `${path}/${routePath(route.firstChild)}` : path;
+}
 
 const interceptors = [cacheInterceptor, retryInterceptor];
 
@@ -22,7 +27,14 @@ if (environment.production) {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withViewTransitions()),
+    provideRouter(
+      routes,
+      withViewTransitions({
+        onViewTransitionCreated: ({ transition, from, to }) => {
+          if (routePath(from) === routePath(to)) transition.skipTransition();
+        },
+      }),
+    ),
     provideHttpClient(withInterceptors(interceptors)),
     importProvidersFrom(
       TranslateModule.forRoot({
