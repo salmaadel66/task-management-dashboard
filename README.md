@@ -4,7 +4,7 @@ A task management dashboard built with **Angular 22**. It uses standalone compon
 
 **Live Demo:** https://salmaadel66.github.io/task-management-dashboard/
 
-> The demo has no real backend. In production builds a mock HTTP interceptor (`mock-backend.interceptor.ts`) serves `moks/db.json` from memory, and saves every create, edit and delete to `localStorage`, so changes are kept after a reload. Clear the site data to reset the demo.
+> The demo API is JSON Server hosted on [Render](https://render.com) (free plan, see `render.yaml`): https://task-dashboard-mock-api.onrender.com. The free service sleeps when idle, so the first request can take up to a minute, and data resets to `moks/db.json` whenever the service restarts.
 
 ---
 
@@ -57,7 +57,7 @@ The app lets a team create, organize and track tasks on a Kanban-style board, an
 | Layout grid   | Bootstrap 5 (CSS only)       | Grid and spacing utilities, no Bootstrap JavaScript                         |
 | Charts        | ApexCharts (`ng-apexcharts`) | Responsive donut charts with legends out of the box                         |
 | i18n          | ngx-translate                | Switches language at runtime with one build                                 |
-| Mock backend  | JSON Server                  | Real REST endpoints (`POST`, `PATCH`, `DELETE`) persisted to `moks/db.json` |
+| Mock backend  | JSON Server                  | Real REST endpoints (`POST`, `PUT`, `DELETE`) persisted to `moks/db.json` |
 | Unit tests    | Vitest + jsdom               | Default runner of the Angular CLI; fast, Jest-compatible API                |
 | Formatting    | Prettier                     | One formatting standard, with the Angular HTML parser                       |
 
