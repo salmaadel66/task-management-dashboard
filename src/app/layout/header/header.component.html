@@ -1,0 +1,62 @@
+<header class="l-header">
+  <div class="l-header__brand">
+    <button
+      class="c-button is-icon l-header__menu"
+      [attr.aria-label]="(menuOpen() ? 'CLOSE_MENU' : 'OPEN_MENU') | translate"
+      aria-controls="sidebar"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="menuClick.emit()"
+    >
+      <img
+        class="c-button__icon"
+        src="assets/images/icons/menu.svg"
+        alt=""
+        width="24"
+        height="24"
+      />
+    </button>
+    <img class="l-header__logo" src="assets/images/icons/logo.svg" alt="" width="32" height="32" />
+    <span class="l-header__title">{{ 'TASK_MANAGER' | translate }}</span>
+  </div>
+
+  @if (hasSearch()) {
+    <label class="c-search l-header__search">
+      <img
+        class="c-search__icon"
+        src="assets/images/icons/search.svg"
+        alt=""
+        width="14"
+        height="14"
+      />
+      <input
+        class="c-search__input"
+        type="search"
+        [placeholder]="'SEARCH_TASKS_PLACEHOLDER' | translate"
+        [attr.aria-label]="'SEARCH_TASKS' | translate"
+        [value]="search()"
+        #searchInput
+        (input)="onSearch(searchInput.value)"
+      />
+    </label>
+  }
+
+  <div class="l-header__actions">
+    <button
+      class="c-button is-outline is-small"
+      [attr.aria-label]="'SWITCH_LANGUAGE' | translate"
+      (click)="language.toggle()"
+    >
+      {{ 'LANGUAGE_SHORT' | translate }}
+    </button>
+    <button class="c-button is-icon" [attr.aria-label]="'NOTIFICATIONS' | translate">
+      <img
+        class="c-button__icon"
+        src="assets/images/icons/bell.svg"
+        alt=""
+        width="20"
+        height="20"
+      />
+    </button>
+    <span class="c-avatar" role="img" aria-label="John Doe">JD</span>
+  </div>
+</header>
