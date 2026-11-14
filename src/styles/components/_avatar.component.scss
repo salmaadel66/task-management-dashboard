@@ -1,0 +1,18 @@
+.c-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
+
+  &.is-small {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    font-size: var(--font-xs);
+  }
+}

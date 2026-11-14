@@ -1,0 +1,31 @@
+.c-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+
+  &.is-high {
+    background: var(--color-high-bg);
+    color: var(--color-high);
+  }
+
+  &.is-medium {
+    background: var(--color-medium-bg);
+    color: var(--color-medium);
+  }
+
+  &.is-low {
+    background: var(--color-low-bg);
+    color: var(--color-low);
+  }
+
+  &.is-count {
+    padding: 0.125rem var(--space-2);
+    border-radius: var(--radius-lg);
+    background: var(--color-count-bg);
+    color: var(--color-text);
+  }
+}

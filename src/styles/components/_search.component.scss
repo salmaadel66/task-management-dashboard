@@ -1,0 +1,27 @@
+.c-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+
+  &:focus-within {
+    border-color: var(--color-primary);
+  }
+
+  &__icon {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
+
+  &__input {
+    flex: 1;
+    min-inline-size: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--color-text);
+  }
+}
