@@ -1,0 +1,152 @@
+@use '../../../styles/tools' as *;
+
+.p-analytics {
+  &__header {
+    margin-block-end: var(--space-5);
+  }
+
+  &__heading {
+    margin: 0;
+    font-size: var(--font-xl);
+    font-weight: var(--weight-bold);
+  }
+
+  &__subheading {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-sm);
+  }
+
+  &__state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding-block: var(--space-8);
+    color: var(--color-text-secondary);
+  }
+
+  &__card {
+    block-size: 100%;
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+
+    apx-chart {
+      display: block;
+      min-block-size: 280px;
+    }
+  }
+
+  &__card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-block-end: var(--space-4);
+    padding-block-end: var(--space-3);
+    border-block-end: 1px solid var(--color-border-light);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: var(--font-md);
+    font-weight: var(--weight-semibold);
+  }
+
+  &__activity {
+    max-block-size: 22rem;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  &__activity-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--radius-md);
+    transition: background var(--duration) ease;
+
+    &:hover {
+      background: var(--color-bg);
+    }
+  }
+
+  &__activity-body {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  &__activity-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--font-sm);
+  }
+
+  &__task-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__activity-meta {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-xs);
+  }
+
+  &__activity-time {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-xs);
+  }
+
+  // Mobile: the time moves under the name so the task title gets the full width
+  @include mq(max, w, xs) {
+    &__card {
+      padding: var(--space-4);
+    }
+
+    &__activity-item {
+      flex-wrap: wrap;
+      padding-inline: 0;
+    }
+
+    &__activity-body {
+      flex-basis: calc(100% - 2rem - var(--space-3));
+    }
+
+    &__activity-time {
+      margin-inline-start: calc(2rem + var(--space-3));
+      margin-block-start: calc(-1 * var(--space-2));
+    }
+  }
+  &__action {
+    flex-shrink: 0;
+    padding: 0.125rem var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-xs);
+    font-weight: var(--weight-semibold);
+
+    &.is-completed {
+      background: var(--color-low-bg);
+      color: var(--color-success);
+    }
+
+    &.is-updated {
+      background: var(--color-border-light);
+      color: var(--color-primary-dark);
+    }
+
+    &.is-created {
+      background: var(--color-medium-bg);
+      color: var(--color-medium);
+    }
+  }
+}

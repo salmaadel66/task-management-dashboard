@@ -1,0 +1,127 @@
+<header class="p-analytics__header">
+  <h1 class="p-analytics__heading">{{ 'TASK_ANALYTICS' | translate }}</h1>
+  <p class="p-analytics__subheading">{{ 'ANALYTICS_DESCRIPTION' | translate }}</p>
+</header>
+
+@if (tasksResource.isLoading() && !tasksResource.hasValue()) {
+  <div class="p-analytics__state" role="status">
+    <mat-spinner diameter="40" [attr.aria-label]="'LOADING_TASKS' | translate" />
+  </div>
+} @else if (tasksResource.error()) {
+  <div class="p-analytics__state" role="alert" animate.enter="u-fade-in">
+    <p>{{ 'COULD_NOT_LOAD_TASKS' | translate }}</p>
+    <button class="c-button is-primary" (click)="tasksResource.reload()">
+      {{ 'TRY_AGAIN' | translate }}
+    </button>
+  </div>
+} @else if (!tasks().length) {
+  <div class="p-analytics__state">{{ 'NO_TASKS' | translate }}</div>
+} @else {
+  <div class="row g-3" animate.enter="u-fade-in">
+    <section class="col-12 col-lg-6">
+      <div class="p-analytics__card">
+        <div class="p-analytics__card-header">
+          <h2 class="p-analytics__title">{{ 'TASKS_BY_STATUS' | translate }}</h2>
+        </div>
+
+        <ul class="u-visually-hidden">
+          @for (status of statuses; track status; let i = $index) {
+            <li>{{ status | uppercase | translate }}: {{ statusCounts()[i] }}</li>
+          }
+        </ul>
+        <apx-chart
+          aria-hidden="true"
+          [series]="statusCounts()"
+          [labels]="['TODO' | translate, 'IN_PROGRESS' | translate, 'DONE' | translate]"
+          [colors]="statusColors"
+          [chart]="chart"
+          [legend]="legend"
+          [plotOptions]="{
+            pie: {
+              donut: {
+                labels: { show: true, total: { show: true, label: ('TOTAL' | translate) } },
+              },
+            },
+          }"
+        />
+      </div>
+    </section>
+
+    <section class="col-12 col-lg-6">
+      <div class="p-analytics__card">
+        <div class="p-analytics__card-header">
+          <h2 class="p-analytics__title">{{ 'TASKS_BY_PRIORITY' | translate }}</h2>
+        </div>
+
+        <ul class="u-visually-hidden">
+          @for (priority of priorities; track priority; let i = $index) {
+            <li>{{ priority | uppercase | translate }}: {{ priorityCounts()[i] }}</li>
+          }
+        </ul>
+        <apx-chart
+          aria-hidden="true"
+          [series]="priorityCounts()"
+          [labels]="['HIGH' | translate, 'MEDIUM' | translate, 'LOW' | translate]"
+          [colors]="priorityColors"
+          [chart]="chart"
+          [legend]="legend"
+          [plotOptions]="{
+            pie: {
+              donut: {
+                labels: { show: true, total: { show: true, label: ('TOTAL' | translate) } },
+              },
+            },
+          }"
+        />
+      </div>
+    </section>
+
+    <section class="col-12">
+      <div class="p-analytics__card">
+        <div class="p-analytics__card-header">
+          <h2 class="p-analytics__title">{{ 'RECENT_ACTIVITY' | translate }}</h2>
+          <span class="c-badge is-count">{{ recentActivity().length }}</span>
+        </div>
+
+        <ul
+          class="p-analytics__activity"
+          tabindex="0"
+          [attr.aria-label]="'RECENT_ACTIVITY' | translate"
+        >
+          @for (task of recentActivity(); track task.id) {
+            <li class="p-analytics__activity-item">
+              <span class="c-avatar is-small" aria-hidden="true">{{ task.assignee.avatar }}</span>
+
+              <div class="p-analytics__activity-body">
+                <p class="p-analytics__activity-title">
+                  <span class="p-analytics__action is-{{ getAction(task) | lowercase }}">
+                    {{ getAction(task) | translate }}
+                  </span>
+                  <!-- Tooltip only when the title is truncated (ellipsis), checked on each hover -->
+                  <strong
+                    class="p-analytics__task-name"
+                    #taskName
+                    #taskTooltip="matTooltip"
+                    [matTooltip]="task.title"
+                    (mouseenter)="
+                      taskTooltip.disabled = taskName.scrollWidth <= taskName.clientWidth
+                    "
+                  >
+                    {{ task.title }}
+                  </strong>
+                </p>
+                <p class="p-analytics__activity-meta">
+                  <bdi>{{ task.assignee.name }}</bdi>
+                </p>
+              </div>
+
+              <time class="p-analytics__activity-time" [attr.datetime]="task.updatedAt">
+                {{ task.updatedAt | date: 'MMM d, h:mm a' }}
+              </time>
+            </li>
+          }
+        </ul>
+      </div>
+    </section>
+  </div>
+}
