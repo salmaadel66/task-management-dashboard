@@ -1,0 +1,36 @@
+<h1 class="u-visually-hidden">{{ 'DASHBOARD' | translate }}</h1>
+
+<section class="p-dashboard__stats" [attr.aria-label]="'STATISTICS' | translate">
+  @if (statistics.error() || tasks.error()) {
+    <div class="p-dashboard__error" role="alert" animate.enter="u-fade-in">
+      <p>{{ 'COULD_NOT_LOAD_STATISTICS' | translate }}</p>
+      <button class="c-button is-primary" (click)="reload()">{{ 'TRY_AGAIN' | translate }}</button>
+    </div>
+  } @else if (statistics.isLoading() || !tasks.hasValue()) {
+    <div class="p-dashboard__state" role="status">
+      <mat-spinner diameter="40" [attr.aria-label]="'LOADING_STATISTICS' | translate" />
+    </div>
+  } @else {
+    <ul class="row g-3 p-dashboard__list">
+      @for (stat of statistics.value(); track stat.id; let i = $index) {
+        <li class="col-6 col-xl-3">
+          <article class="p-dashboard__card u-stagger" [style.--i]="i">
+            <h2 class="p-dashboard__title">
+              <img [src]="'assets/images/icons/' + icons[stat.id]" alt="" width="18" height="18" />
+              {{ stat.title | translate }}
+            </h2>
+            <p class="p-dashboard__value">{{ values()[stat.id] }}</p>
+            <p class="p-dashboard__change is-{{ stat.changeType }}">
+              @if (stat.changeType !== 'neutral') {
+                <bdi>{{ stat.change }}</bdi>
+              }
+              {{ stat.changeLabel | translate }}
+            </p>
+          </article>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<app-tasks />
