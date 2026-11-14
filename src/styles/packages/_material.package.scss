@@ -20,6 +20,10 @@ html {
   );
 }
 
+.cdk-overlay-backdrop {
+  transition-duration: var(--duration);
+}
+
 .cdk-overlay-pane.mat-mdc-dialog-panel {
   max-width: 95vw !important;
 
