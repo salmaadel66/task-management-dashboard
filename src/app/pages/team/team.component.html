@@ -1,0 +1,62 @@
+<header class="p-team__header">
+  <h1 class="p-team__heading">{{ 'TEAM' | translate }}</h1>
+  <p class="p-team__subheading">{{ 'TEAM_DESCRIPTION' | translate }}</p>
+</header>
+
+@if (tasks.isLoading() && !tasks.hasValue()) {
+  <div class="p-team__state" role="status">
+    <mat-spinner diameter="40" [attr.aria-label]="'LOADING_TEAM' | translate" />
+  </div>
+} @else if (tasks.error()) {
+  <div class="p-team__state" role="alert" animate.enter="u-fade-in">
+    <p>{{ 'COULD_NOT_LOAD_TEAM' | translate }}</p>
+    <button class="c-button is-primary" (click)="tasks.reload()">
+      {{ 'TRY_AGAIN' | translate }}
+    </button>
+  </div>
+} @else {
+  <ul class="row g-3 p-team__list">
+    @for (user of users(); track user.id; let i = $index) {
+      <li class="col-12 col-sm-6 col-xl-4">
+        <article class="p-team__card u-fade-in-up u-stagger" [style.--i]="i">
+          <div class="p-team__profile">
+            <span class="c-avatar p-team__avatar" aria-hidden="true">{{ user.avatar }}</span>
+            <div class="p-team__info">
+              <h2 class="p-team__name">
+                <bdi>{{ user.name }}</bdi>
+              </h2>
+              <a class="p-team__email" [href]="'mailto:' + user.email">{{ user.email }}</a>
+            </div>
+          </div>
+
+          <dl class="p-team__stats">
+            <div class="p-team__stat">
+              <dt>{{ 'TASKS' | translate }}</dt>
+              <dd>{{ countTasks(user) }}</dd>
+            </div>
+            <div class="p-team__stat">
+              <dt>{{ 'IN_PROGRESS' | translate }}</dt>
+              <dd>{{ countTasks(user, 'in_progress') }}</dd>
+            </div>
+            <div class="p-team__stat">
+              <dt>{{ 'DONE' | translate }}</dt>
+              <dd>{{ countTasks(user, 'done') }}</dd>
+            </div>
+          </dl>
+
+          <button
+            mat-stroked-button
+            aria-haspopup="dialog"
+            [attr.aria-label]="'ASSIGN_TASK_TO' | translate: { name: user.name }"
+            (click)="assignTask(user)"
+          >
+            <mat-icon aria-hidden="true">add</mat-icon>
+            {{ 'ASSIGN_TASK' | translate }}
+          </button>
+        </article>
+      </li>
+    } @empty {
+      <li class="col-12 p-team__state">{{ 'NO_TEAM_MEMBERS' | translate }}</li>
+    }
+  </ul>
+}
