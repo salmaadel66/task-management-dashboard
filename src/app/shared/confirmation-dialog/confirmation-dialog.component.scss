@@ -1,0 +1,38 @@
+.c-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block-start: var(--space-6);
+  text-align: center;
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 3rem;
+    block-size: 3rem;
+    border-radius: var(--radius-full);
+    background: var(--color-high-bg);
+    color: var(--color-danger);
+  }
+
+  &__message {
+    margin: 0;
+    color: var(--color-text);
+  }
+
+  &__note {
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-sm);
+  }
+
+  &__actions {
+    gap: var(--space-2);
+    align-self: stretch;
+
+    .c-button {
+      flex: 1;
+    }
+  }
+}
