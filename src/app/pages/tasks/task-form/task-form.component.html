@@ -1,0 +1,112 @@
+<div class="p-task-form__header">
+  <h2 mat-dialog-title class="p-task-form__title">{{ title | translate }}</h2>
+  <button
+    mat-icon-button
+    type="button"
+    [attr.aria-label]="'CLOSE' | translate"
+    (click)="onClose(false)"
+  >
+    <mat-icon aria-hidden="true">close</mat-icon>
+  </button>
+</div>
+
+<form [formGroup]="taskForm" (ngSubmit)="onSubmit()" novalidate>
+  <mat-dialog-content class="p-task-form__content">
+    <div class="row g-3">
+      <mat-form-field class="col-12" appearance="outline">
+        <mat-label>{{ 'TITLE' | translate }}</mat-label>
+        <input matInput formControlName="title" required />
+        <mat-error>{{ 'TITLE_IS_REQUIRED' | translate }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="col-12" appearance="outline">
+        <mat-label>{{ 'DESCRIPTION' | translate }}</mat-label>
+        <textarea matInput formControlName="description" rows="3"></textarea>
+      </mat-form-field>
+
+      <mat-form-field class="col-12 col-sm-6" appearance="outline">
+        <mat-label>{{ 'PRIORITY' | translate }}</mat-label>
+        <mat-select formControlName="priority" required>
+          @for (priority of priorities; track priority) {
+            <mat-option [value]="priority">{{ priority | uppercase | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ 'PRIORITY_IS_REQUIRED' | translate }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="col-12 col-sm-6" appearance="outline">
+        <mat-label>{{ 'STATUS' | translate }}</mat-label>
+        <mat-select formControlName="status" required>
+          @for (status of statuses; track status) {
+            <mat-option [value]="status">{{ status | uppercase | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ 'STATUS_IS_REQUIRED' | translate }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="col-12 col-sm-6" appearance="outline">
+        <mat-label>{{ 'DUE_DATE' | translate }}</mat-label>
+        <input matInput type="date" formControlName="dueDate" required />
+        <mat-error>
+          @if (taskForm.controls.dueDate.hasError('pastDate')) {
+            {{ 'DUE_DATE_CANNOT_BE_IN_THE_PAST' | translate }}
+          } @else {
+            {{ 'DUE_DATE_IS_REQUIRED' | translate }}
+          }
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="col-12 col-sm-6" appearance="outline">
+        <mat-label>{{ 'ASSIGNEE' | translate }}</mat-label>
+        <mat-select formControlName="assigneeId" required>
+          @for (user of users; track user.id) {
+            <mat-option [value]="user.id">{{ user.name }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>{{ 'ASSIGNEE_IS_REQUIRED' | translate }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="p-task-form__tags" role="group" aria-labelledby="tags-title" formArrayName="tags">
+      <div class="p-task-form__tags-header">
+        <h3 id="tags-title" class="p-task-form__tags-title">{{ 'TAGS' | translate }}</h3>
+        <button mat-button type="button" (click)="addTag()">
+          <mat-icon aria-hidden="true">add</mat-icon>
+          {{ 'ADD_TAG' | translate }}
+        </button>
+      </div>
+
+      <div class="row g-3">
+        @for (tag of tags.controls; track tag; let i = $index) {
+          <mat-form-field class="col-12 col-sm-6" appearance="outline">
+            <mat-label>{{ 'TAG' | translate }} {{ i + 1 }}</mat-label>
+            <input matInput [formControlName]="i" required />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              [attr.aria-label]="('REMOVE_TAG' | translate) + ' ' + (i + 1)"
+              (click)="removeTag(i)"
+            >
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+            <mat-error>{{ 'TAG_IS_REQUIRED' | translate }}</mat-error>
+          </mat-form-field>
+        }
+      </div>
+    </div>
+
+    @if (saveError()) {
+      <p class="p-task-form__error" role="alert">{{ 'COULD_NOT_SAVE_TASK' | translate }}</p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="p-task-form__actions">
+    <button mat-stroked-button type="button" [disabled]="isLoading()" (click)="onClose(false)">
+      {{ 'CLOSE' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="taskForm.invalid || isLoading()">
+      {{ (isLoading() ? 'SAVING' : task ? 'SAVE_CHANGES' : 'CREATE_TASK') | translate }}
+    </button>
+  </mat-dialog-actions>
+</form>

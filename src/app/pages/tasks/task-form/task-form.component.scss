@@ -1,0 +1,62 @@
+.p-task-form {
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline-end: var(--space-3);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  &__title {
+    font-weight: var(--weight-bold);
+  }
+
+  &__content {
+    padding-block: var(--space-5);
+  }
+
+  mat-form-field {
+    inline-size: 100%;
+  }
+
+  &__tags {
+    margin-block-start: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  &__tags-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-block-end: var(--space-2);
+  }
+
+  &__tags-title {
+    margin: 0;
+    font-size: var(--font-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  &__tags-empty {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-sm);
+  }
+
+  &__error {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-high-bg);
+    color: var(--color-danger);
+    font-size: var(--font-sm);
+  }
+
+  &__actions {
+    justify-content: flex-end;
+    gap: var(--space-2);
+    border-block-start: 1px solid var(--color-border);
+  }
+}
