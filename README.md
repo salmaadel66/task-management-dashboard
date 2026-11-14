@@ -16,8 +16,9 @@ A task management dashboard built with **Angular 22**. It uses standalone compon
 4. [Environment Configuration](#4-environment-configuration)
 5. [Available Scripts and Commands](#5-available-scripts-and-commands)
 6. [Design Patterns and State Management](#6-design-patterns-and-state-management)
-7. [Performance Optimization Techniques](#7-performance-optimization-techniques)
-8. [Known Limitations and Future Improvements](#8-known-limitations-and-future-improvements)
+7. [Testing Strategy](#7-testing-strategy)
+8. [Performance Optimization Techniques](#8-performance-optimization-techniques)
+9. [Known Limitations and Future Improvements](#9-known-limitations-and-future-improvements)
 
 ---
 
@@ -59,7 +60,10 @@ The app lets a team create, organize and track tasks on a Kanban-style board, an
 | i18n          | ngx-translate                | Switches language at runtime with one build                                 |
 | Mock backend  | JSON Server                  | Real REST endpoints (`POST`, `PUT`, `DELETE`) persisted to `moks/db.json`   |
 | Unit tests    | Vitest + jsdom               | Default runner of the Angular CLI; fast, Jest-compatible API                |
+| Linting       | ESLint + `angular-eslint`    | Angular best practices and template accessibility rules                     |
 | Formatting    | Prettier                     | One formatting standard, with the Angular HTML parser                       |
+| Git hooks     | Husky + lint-staged          | Runs ESLint and Prettier on staged files before each commit                 |
+| Deployment    | GitHub Actions + Pages       | Builds and deploys the live demo on every push to `main`                    |
 
 ---
 
@@ -71,10 +75,10 @@ The app lets a team create, organize and track tasks on a Kanban-style board, an
 src/
 ├── app/
 │   ├── core/                       # Singletons with no UI
-│   │   ├── environments/           # environment.ts
-│   │   ├── interceptors/           # cache.interceptor.ts, retry.interceptor.ts
+│   │   ├── environments/           # environment.ts, environment.prod.ts
+│   │   ├── interceptors/           # cache, retry and mock-backend interceptors
 │   │   ├── interfaces/             # Task, User, Statistic
-│   │   └── services/               # language.service.ts
+│   │   └── services/               # users.service.ts (shared by Tasks and Team)
 │   ├── layout/                     # App shell: layout, header, sidebar
 │   ├── pages/                      # One lazy-loaded folder per route
 │   │   ├── dashboard/              #   + services/statistics.service.ts
@@ -90,7 +94,7 @@ moks/db.json                        # JSON Server database
 public/assets/i18n/                 # en.json, ar.json
 ```
 
-Dependencies go in one direction: `pages` → `shared` → `core`. `core` doesn't import anything from features, and `shared` doesn't know about tasks or users. A service sits inside the page folder that owns it (for example `pages/tasks/services/`). It moves to `core` only when it becomes app-wide, like `LanguageService`.
+Dependencies go in one direction: `pages` → `shared` → `core`. `core` doesn't import anything from features, and `shared` doesn't know about tasks or users. A service sits inside the page folder that owns it (for example `pages/tasks/services/`). It moves to `core` only when more than one page uses it, like `UsersService`.
 
 ### Key Decisions
 
@@ -99,7 +103,7 @@ No `NgModule`s. Each page is loaded with `loadComponent`, so every route becomes
 _Trade-off:_ each component lists its own `imports`, which is more verbose but shows its dependencies explicitly.
 
 **2. Signals instead of a state library (NgRx)**
-The state is small: one task list, one statistics list and a few filters. `signal` and `computed` handle it without actions, reducers or effects.
+The state is small: one task list, one user list, one statistics list and a few filters. `signal` and `computed` handle it without actions, reducers or effects.
 _Trade-off:_ there are no Redux DevTools or time-travel debugging. If the app grows to many features sharing complex state, a Signal Store would be the next step.
 
 **3. `httpResource` for reads, `HttpClient` for writes**
@@ -115,7 +119,7 @@ Caching and retry logic live in the HTTP layer, so services stay simple and ever
 The header writes `?search=` and the Tasks page reads it with `toSignal(route.queryParams)`. Search survives a page refresh, can be shared as a link, and the header and the board don't need a shared service.
 
 **7. Runtime i18n with ngx-translate**
-`@angular/localize` needs a separate build per language. ngx-translate switches language instantly from JSON files. `LanguageService` also sets `<html lang dir>` and the CDK `Directionality`, so Material menus, dialogs and drag & drop flip correctly in RTL.
+`@angular/localize` needs a separate build per language. ngx-translate switches language instantly from JSON files. The header switches the language, saves it in `localStorage` and sets `<html lang dir>` and the CDK `Directionality`, so Material menus, dialogs and drag & drop flip correctly in RTL.
 
 **8. Styling: Angular Material + an ITCSS SCSS architecture**
 Material provides behavior and accessibility. The visual design comes from CSS custom properties in `styles/theme/` (colors, fonts, sizes, motion). Global SCSS is split into ITCSS-style folders (settings, tools, generic, elements, packages, components, theme, utilities) with BEM naming (`c-button`, `u-visually-hidden`, `is-*` states). Component-specific styles stay in each component's own `.scss` file. All spacing uses logical properties (`margin-inline-start`, `padding-block`), which is what makes RTL work with no extra CSS.
@@ -150,16 +154,24 @@ On Windows, `npm run dev` runs both in one command.
 
 ## 4. Environment Configuration
 
-The configuration is in `src/app/core/environments/environment.ts`:
+There are two environment files in `src/app/core/environments/`:
+
+| File                  | Used by                               | `production` | `apiUrl`                |
+| --------------------- | ------------------------------------- | ------------ | ----------------------- |
+| `environment.ts`      | `npm start`, `npm test`, dev builds   | `false`      | `http://localhost:3000` |
+| `environment.prod.ts` | `npm run build` (production, default) | `true`       | `api`                   |
 
 ```ts
+// environment.ts
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000',
 };
 ```
 
+- The production build swaps the files with `fileReplacements` in `angular.json`.
 - `apiUrl` is the only place the backend address is defined. Every service builds its URLs from it, so pointing the app at another backend means changing this one value.
+- `production: true` registers the mock backend interceptor, which answers the requests in the browser (see [Live Demo Backend](#live-demo-backend)).
 - JSON Server serves `moks/db.json` on port `3000`. It writes changes back to that file, so created and edited tasks stay after a restart. To reset the data, restore the file from git: `git checkout moks/db.json`.
 - The Angular dev server runs on port `4200`.
 
@@ -199,7 +211,7 @@ GitHub Pages hosts static files only, so the live demo needs its API from somewh
 Since none of the hosted options worked, the demo uses `mock-backend.interceptor.ts`, which is registered only in production builds (`environment.production`):
 
 - The services still use `HttpClient` and `httpResource`, so the app keeps loading its data over HTTP. Every request still goes through the cache and retry interceptors.
-- The mock interceptor is last in the chain. It answers `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on `/tasks` and `/statistics` from the data in `moks/db.json`, and returns `404` for unknown items. A short delay keeps the loading states visible.
+- The mock interceptor is last in the chain. It answers `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on `/tasks`, `/users` and `/statistics` from the data in `moks/db.json`, and returns `404` for unknown items. A short delay keeps the loading states visible.
 - Every change is saved to `localStorage`, so created, edited and deleted tasks stay after a reload. To reset the demo, clear the site data in the browser or run `localStorage.removeItem('mock-db')` in the console.
 - In development nothing changes: the interceptor is not registered, and the app talks to JSON Server on `http://localhost:3000`.
 - To move the demo to a real backend later, set `apiUrl` in `environment.prod.ts` and stop registering the interceptor. No service or component needs to change.
@@ -208,16 +220,25 @@ Since none of the hosted options worked, the demo uses `mock-backend.interceptor
 
 ## 5. Available Scripts and Commands
 
-| Command                | Description                                                       |
-| ---------------------- | ----------------------------------------------------------------- |
-| `npm start`            | Starts the Angular dev server on `http://localhost:4200`          |
-| `npm run server`       | Starts JSON Server on `http://localhost:3000` (watches `db.json`) |
-| `npm run dev`          | Starts the API and the app together (Windows only)                |
-| `npm run build`        | Production build into `dist/`                                     |
-| `npm run watch`        | Development build that rebuilds on file changes                   |
-| `npm test`             | Runs the unit tests with Vitest                                   |
-| `npm run format`       | Formats `src/**/*.{ts,html,scss}` with Prettier                   |
-| `npm run format:check` | Checks formatting without changing files                          |
+| Command                     | Description                                                        |
+| --------------------------- | ------------------------------------------------------------------ |
+| `npm start`                 | Starts the Angular dev server on `http://localhost:4200`           |
+| `npm run server`            | Starts JSON Server on `http://localhost:3000` (watches `db.json`)  |
+| `npm run dev`               | Starts the API and the app together (Windows only)                 |
+| `npm run build`             | Production build into `dist/` (uses `environment.prod.ts`)         |
+| `npm run watch`             | Development build that rebuilds on file changes                    |
+| `npm test`                  | Runs the unit tests with Vitest (watch mode)                       |
+| `npm test -- --watch=false` | Runs the unit tests once, for CI                                   |
+| `npm run test:coverage`     | Runs the tests once and prints a coverage report (to `coverage/`)  |
+| `npm run lint`              | Lints TypeScript and HTML templates with ESLint                    |
+| `npm run lint:fix`          | Lints and fixes what ESLint can fix automatically                  |
+| `npm run format`            | Formats `src/**/*.{ts,html,scss}` with Prettier                    |
+| `npm run format:check`      | Checks formatting without changing files                           |
+| `npm run prepare`           | Installs the Husky Git hooks (runs automatically on `npm install`) |
+
+**Pre-commit hook.** Husky runs `lint-staged` before each commit: staged `.ts` and `.html` files go through `eslint --fix` and Prettier, and `.scss` files through Prettier. A commit with lint errors is blocked.
+
+**Deployment.** `.github/workflows/deploy.yml` builds the app with `--base-href /task-management-dashboard/` on every push to `main`, copies `index.html` to `404.html` so deep links work, and deploys to GitHub Pages.
 
 ---
 
@@ -264,14 +285,14 @@ Because the card has no dependencies, it can be tested with plain inputs, and ch
 
 All state is built with Angular Signals, in four kinds:
 
-| Kind of state | API                           | Examples                                             |
-| ------------- | ----------------------------- | ---------------------------------------------------- |
-| Server state  | `httpResource`                | `TasksService.tasks`, `StatisticsService.statistics` |
-| UI state      | `signal`                      | `activeTab`, `selectedPriority`, `selectedAssignee`  |
-| Derived state | `computed`                    | `filteredTasks`, `statusCounts`, `recentActivity`    |
-| URL state     | `toSignal(route.queryParams)` | `search`, `new` (opens the "Add task" dialog)        |
+| Kind of state | API                           | Examples                                                                   |
+| ------------- | ----------------------------- | -------------------------------------------------------------------------- |
+| Server state  | `httpResource`                | `TasksService.tasks`, `UsersService.users`, `StatisticsService.statistics` |
+| UI state      | `signal`                      | `activeTab`, `selectedPriority`, `selectedAssignee`                        |
+| Derived state | `computed`                    | `filteredTasks`, `statusCounts`, `recentActivity`                          |
+| URL state     | `toSignal(route.queryParams)` | `search`, `new` (opens the "Add task" dialog)                              |
 
-**Read flow.** `TasksService.tasks` is the single source of truth. Each page derives what it needs with `computed`: the board filters it, the dashboard counts it, analytics groups it and the team page groups it by user. Nothing is copied, so the views can't drift apart.
+**Read flow.** `TasksService.tasks` is the single source of truth. Each page derives what it needs with `computed`: the board filters it, the dashboard counts it, analytics groups it and the team page counts it per user from `UsersService.users`. Nothing is copied, so the views can't drift apart.
 
 ```
                  TasksService.tasks  (httpResource<Task[]>)
@@ -286,11 +307,11 @@ All state is built with Angular Signals, in four kinds:
 **Write flow.**
 
 1. The user saves, deletes or drops a task.
-2. `TasksService` sends `POST`, `PATCH` or `DELETE` with `HttpClient`.
+2. `TasksService` sends `POST`, `PUT` or `DELETE` with `HttpClient`.
 3. `cacheInterceptor` sees a non-`GET` request and clears the cache.
 4. The page calls `tasksResource.reload()`. Fresh data arrives and every `computed` value updates.
 
-**Optimistic update (drag and drop).** When a card is dropped, the board is updated right away with `tasksResource.set(...)`, and then the `PATCH` is sent. If the request fails, an error is shown and `reload()` restores the server state.
+**Optimistic update (drag and drop).** When a card is dropped, the board is updated right away with `tasksResource.set(...)`, and then the `PUT` is sent. If the request fails, an error is shown and `reload()` restores the server state.
 
 **Side effects.** `effect()` is used only where a reaction is needed. For example, opening the "Add task" dialog when the URL has `?new=true` and the tasks have finished loading. The dialog call is wrapped in `untracked()` so it doesn't become a dependency of the effect.
 
@@ -310,7 +331,13 @@ The task form is a typed `FormGroup` inside a Material dialog.
 Interceptors are registered in this order:
 
 ```ts
-provideHttpClient(withInterceptors([cacheInterceptor, retryInterceptor]));
+const interceptors = [cacheInterceptor, retryInterceptor];
+
+if (environment.production) {
+  interceptors.push(mockBackendInterceptor);
+}
+
+provideHttpClient(withInterceptors(interceptors));
 ```
 
 **`cacheInterceptor`**
@@ -332,7 +359,57 @@ provideHttpClient(withInterceptors([cacheInterceptor, retryInterceptor]));
 
 ---
 
-## 7. Performance Optimization Techniques
+## 7. Testing Strategy
+
+### Tools
+
+- **Vitest** with **jsdom**, run through the Angular CLI unit-test builder (`@angular/build:unit-test`). Vitest globals (`describe`, `it`, `expect`, `vi`) are enabled in `tsconfig.spec.json`.
+- **Angular `TestBed`** to render components with their real templates.
+- **`HttpTestingController`** (`provideHttpClientTesting`) to check HTTP calls without a server.
+
+### What is tested
+
+There are **142 tests in 16 spec files**, one spec next to every component, service and interceptor.
+
+| Layer                    | Spec files                                         | What the tests check                                                                                     |
+| ------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Services                 | `tasks.service`, `statistics.service`              | The right URL and HTTP method for each call, and the request body                                        |
+| Interceptors             | `cache.interceptor`, `retry.interceptor`           | Cache hits and clearing on writes; retry only on `GET` and temporary errors, backoff timing, max retries |
+| Smart components         | `tasks`, `dashboard`, `analytics`, `team`          | Loading, error and retry states; filters and search; computed statistics; drag and drop; dialogs         |
+| Presentational / dialogs | `task-card`, `task-form`, `confirmation-dialog`    | Inputs render correctly, outputs emit; validators, `FormArray` tags, save errors, `Escape` while saving  |
+| Layout and routing       | `app`, `app.routes`, `layout`, `header`, `sidebar` | Lazy routes, search written to the URL, language switch and RTL, sidebar open and close                  |
+
+### Approach
+
+- **Test behavior through the DOM.** Tests click buttons and read rendered text with `querySelector`, instead of calling private methods, so they keep passing after refactors.
+- **Isolate each unit.** Components get fake services with `{ provide: X, useValue: mock }`. Smart components get a small `fakeResource()` helper built from signals, which acts like an `httpResource` (`value`, `isLoading`, `error`, `reload`, `set`). This makes loading and error states easy to set up.
+- **Mock dialogs and the router.** `MatDialog.open` is a `vi.fn()` that returns a fake `afterClosed()`, and route parameters come from a `BehaviorSubject`, so `?search=` and `?new=true` can be tested.
+- **Control time.** The retry backoff (500 ms, 1 s, 2 s) is tested with `vi.useFakeTimers()`, so the tests don't wait in real time.
+- **Zoneless-friendly.** Tests wait with `fixture.whenStable()` instead of `fakeAsync` and `tick`.
+- **Run on every commit path.** Lint and formatting run in the pre-commit hook. Tests run locally with `npm test`.
+
+### Results
+
+Last run on 14 Nov 2026 with `npm run test:coverage` (Vitest 5.1, `@vitest/coverage-v8`):
+
+```
+ Test Files  16 passed (16)
+      Tests  142 passed (142)
+   Duration  8.92s
+```
+
+| Metric     | Coverage | Covered / total |
+| ---------- | -------- | --------------- |
+| Statements | 83.64%   | 793 / 948       |
+| Branches   | 92.85%   | 247 / 266       |
+| Functions  | 87.83%   | 130 / 148       |
+| Lines      | 86.59%   | 549 / 634       |
+
+Services, interceptors, the header, the team page and the confirmation dialog are at or near 100%. The report shows **0% for `dashboard.component.html` and `analytics.component.html`**, even though their specs render those templates and check the spinner, the error alert, the stat cards, the charts and the activity list. The v8 report doesn't map those template lines, so the real coverage is higher than the totals above.
+
+---
+
+## 8. Performance Optimization Techniques
 
 - **OnPush change detection on every component.** Components re-render only when an input or a signal they read changes.
 - **Lazy loading and code splitting.** Each page is a separate chunk loaded with `loadComponent`. The first load only contains the shell.
@@ -342,32 +419,61 @@ provideHttpClient(withInterceptors([cacheInterceptor, retryInterceptor]));
 - **No memory leaks.** Long-lived subscriptions (router events, dialog results) use `takeUntilDestroyed()`. Dialog keyboard listeners end when the dialog closes. Route parameters are read with `toSignal()`, which unsubscribes automatically. One-shot HTTP calls complete on their own.
 - **Optimistic UI.** Drag and drop updates the screen before the server responds.
 - **Light animations.** Animations use CSS only (`opacity`, `translate`, `scale`) and turn off when the user enables `prefers-reduced-motion`.
-- **Lighthouse.** The audit findings for performance, accessibility and best practices were fixed.
+- **Lighthouse.** The audit is run on the live demo. The scores and the remaining findings are below.
+
+### Lighthouse Audit
+
+Run on 14 Nov 2026 with Lighthouse 12.8.2 (headless Chrome) against the [live demo](https://salmaadel66.github.io/task-management-dashboard/).
+
+| Category       | Desktop | Mobile |
+| -------------- | ------- | ------ |
+| Performance    | 94      | 76     |
+| Accessibility  | 100     | 100    |
+| Best Practices | 100     | 96     |
+| SEO            | 100     | 100    |
+
+| Metric                   | Desktop | Mobile |
+| ------------------------ | ------- | ------ |
+| First Contentful Paint   | 0.7 s   | 2.4 s  |
+| Largest Contentful Paint | 0.9 s   | 2.9 s  |
+| Total Blocking Time      | 130 ms  | 410 ms |
+| Cumulative Layout Shift  | 0.023   | 0.143  |
+| Speed Index              | 1.6 s   | 3.2 s  |
+
+The mobile run uses Lighthouse's default throttling (slow 4G and a 4× slower CPU), so its numbers are lower. What it still reports:
+
+- **Unused JavaScript.** Angular Material, the CDK and ngx-translate load with the app shell. ApexCharts is already in the lazy analytics chunk.
+- **Short cache lifetime.** GitHub Pages sets a 10-minute `Cache-Control`, and that can't be changed there.
+- **Layout shift on mobile (0.143).** Content moves when the data and the web fonts arrive after the first paint.
+- **Small text on mobile.** Some labels and badges are under 12 px, which is why mobile Best Practices is 96.
+
+To run the audit again: `npx lighthouse https://salmaadel66.github.io/task-management-dashboard/ --preset=desktop --view` (leave out `--preset=desktop` for mobile).
 
 ---
 
-## 8. Known Limitations and Future Improvements
+## 9. Known Limitations and Future Improvements
 
 ### Known Limitations
 
-- **Unit tests aren't written yet.**
-- **ESLint and Husky are not set up yet.** Only Prettier enforces code style today.
-- **Users come from the tasks.** There's no `/users` endpoint, so a user with no tasks can't appear in the list.
+- **The live demo has no real backend.** Its data lives in the browser's `localStorage`, so every visitor sees their own copy (see [Live Demo Backend](#live-demo-backend)).
+- **No coverage threshold or end-to-end tests.** Coverage is measured (83.64% statements) but not enforced, and full user flows aren't tested in a real browser.
+- **Mobile performance is 76 in Lighthouse.** See [Lighthouse Audit](#lighthouse-audit) for the reasons.
+- **Tests don't run in CI.** The GitHub Actions workflow only builds and deploys.
 - **Drag and drop order isn't saved.** Moving a card to another column is saved; reordering inside a column is lost after a reload, because tasks have no `order` field.
 - **Recent activity is derived from `updatedAt`**, not from a real history log. Only the latest change per task is shown.
 - **The cache has no expiry.** It's cleared on every write, but data changed by another user won't show until a write or a full page reload.
 - **`npm run dev` works only on Windows**, because it uses the `start` command.
-- **There's only one environment file**, with no production configuration.
 
 ### Future Improvements
 
-1. Write unit tests and add a coverage threshold to the test configuration.
-2. Add `angular-eslint`, plus Husky with lint-staged to run ESLint and Prettier before each commit.
-3. Add JSDoc to the complex logic: interceptors, drag and drop, and the form validators.
-4. Add a GitHub Actions workflow that runs lint, tests and the build on every pull request.
-5. Add a Dockerfile and `docker-compose.yml` that run the app and JSON Server together.
-6. Add a `/users` endpoint and a `UsersService`.
-7. Add an `order` field to tasks and save the position after drag and drop.
-8. Add an `/activities` endpoint that records every change.
-9. Add a time-to-live to the HTTP cache.
-10. Use `concurrently` for a cross-platform `dev` script, and add `environment.prod.ts` with `fileReplacements`.
+1. Add a coverage threshold (for example 80%) so the tests fail if coverage drops.
+2. Improve mobile performance: preload the fonts, reserve space for the stat cards to cut layout shift, and raise the smallest font sizes to 12 px.
+3. Add end-to-end tests (Playwright) for the main flows: create, edit, drag and delete a task.
+4. Run lint, tests and the build in GitHub Actions on every pull request, before deploying.
+5. Host a real backend for the live demo and remove the mock interceptor.
+6. Add JSDoc to the complex logic: interceptors, drag and drop, and the form validators.
+7. Add a Dockerfile and `docker-compose.yml` that run the app and JSON Server together.
+8. Add an `order` field to tasks and save the position after drag and drop.
+9. Add an `/activities` endpoint that records every change.
+10. Add a time-to-live to the HTTP cache.
+11. Use `concurrently` for a cross-platform `dev` script.
