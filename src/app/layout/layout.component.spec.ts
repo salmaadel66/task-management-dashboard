@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { LayoutComponent } from './layout.component';
-import { LanguageService } from '../core/services/language.service';
 
 describe('LayoutComponent', () => {
   let fixture: ComponentFixture<LayoutComponent>;
@@ -11,11 +10,7 @@ describe('LayoutComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LayoutComponent],
-      providers: [
-        provideTranslateService(),
-        provideRouter([]),
-        { provide: LanguageService, useValue: { toggle: vi.fn() } },
-      ],
+      providers: [provideTranslateService(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LayoutComponent);
