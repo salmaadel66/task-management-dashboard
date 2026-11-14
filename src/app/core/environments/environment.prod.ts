@@ -1,5 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'api',
-  useMockBackend: true,
+  apiUrl: 'https://task-dashboard-mock-api.onrender.com',
 };
