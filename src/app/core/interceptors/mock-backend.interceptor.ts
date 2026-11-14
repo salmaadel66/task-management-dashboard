@@ -8,16 +8,13 @@ interface Item {
   [key: string]: unknown;
 }
 
-// In-memory copy of the mock data, used by the live demo (no real backend)
 const db: Record<string, Item[]> = structuredClone(data);
 
 export const mockBackendInterceptor: HttpInterceptorFn = (req, next) => {
-  // Let non-API requests (e.g. translation files) pass through
   if (!req.url.startsWith(environment.apiUrl)) {
     return next(req);
   }
 
-  // e.g. "api/tasks/task-001" => collection = "tasks", id = "task-001"
   const [collection, id] = req.url.slice(environment.apiUrl.length + 1).split('/');
   const items = db[collection];
 
@@ -58,7 +55,6 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next) => {
       break;
   }
 
-  // Small delay so loading states behave like a real server
   return of(new HttpResponse({ status, body })).pipe(delay(300));
 };
 
