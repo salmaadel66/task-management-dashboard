@@ -1,0 +1,52 @@
+@let t = task();
+
+<div class="p-tasks__card-header">
+  <span class="c-badge is-{{ t.priority }}">{{ t.priority | uppercase | translate }}</span>
+
+  <button
+    class="p-tasks__action"
+    [matMenuTriggerFor]="taskMenu"
+    [attr.aria-label]="'TASK_ACTIONS' | translate: { title: t.title }"
+  >
+    <mat-icon aria-hidden="true">more_vert</mat-icon>
+  </button>
+  <mat-menu #taskMenu="matMenu">
+    <button mat-menu-item aria-haspopup="dialog" (click)="edit.emit(t)">
+      <mat-icon aria-hidden="true">edit</mat-icon>
+      {{ 'EDIT_TASK' | translate }}
+    </button>
+    <button mat-menu-item aria-haspopup="dialog" (click)="delete.emit(t)">
+      <mat-icon aria-hidden="true">delete_outline</mat-icon>
+      {{ 'DELETE_TASK' | translate }}
+    </button>
+  </mat-menu>
+</div>
+
+<h3 class="p-tasks__title">{{ t.title }}</h3>
+<p class="p-tasks__description">{{ t.description }}</p>
+
+<p class="p-tasks__date">
+  @if (t.status === 'done') {
+    <img src="assets/images/icons/tasks.svg" alt="" width="14" height="14" />
+    {{ 'COMPLETED' | translate }} {{ t.completedAt | date }}
+  } @else if (overdue()) {
+    <img src="assets/images/icons/overdue.svg" alt="" width="14" height="14" />
+    {{ 'OVERDUE' | translate }} {{ t.dueDate | date }}
+  } @else {
+    <img src="assets/images/icons/calendar.svg" alt="" width="14" height="14" />
+    {{ 'DUE' | translate }} {{ t.dueDate | date }}
+  }
+</p>
+
+@if (t.tags.length) {
+  <div class="p-tasks__tags">
+    @for (tag of t.tags; track $index) {
+      <span class="c-tag">{{ tag }}</span>
+    }
+  </div>
+}
+
+<div class="p-tasks__footer">
+  <span class="c-avatar is-small" aria-hidden="true">{{ t.assignee.avatar }}</span>
+  <bdi>&#64;{{ t.assignee.name }}</bdi>
+</div>
