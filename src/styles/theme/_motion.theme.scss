@@ -1,0 +1,82 @@
+:root {
+  --duration: 0.2s;
+  --duration-slow: 0.3s;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    --duration: 0s;
+    --duration-slow: 0s;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: smooth;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scale-out {
+  to {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+// Classes for Angular's `animate.enter` / `animate.leave`.
+// Angular adds the class, waits for the animation to end, then removes it (or the element).
+.u-fade-in {
+  animation: fade-in var(--duration) ease both;
+}
+
+.u-fade-in-up {
+  animation: fade-in-up var(--duration-slow) var(--ease-out) both;
+}
+
+.u-fade-out {
+  animation: fade-out var(--duration) ease both;
+}
+
+.u-scale-out {
+  animation: scale-out var(--duration) ease both;
+}
+
+// Stagger a list: set `--i` (the item index) and each item starts a bit after the previous one
+.u-stagger {
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+// Route change (router `withViewTransitions()`): the old page fades out, the new one slides in
+::view-transition-old(page) {
+  animation: fade-out var(--duration) ease both;
+}
+
+::view-transition-new(page) {
+  animation: fade-in-up var(--duration-slow) var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
