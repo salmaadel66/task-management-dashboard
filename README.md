@@ -4,7 +4,7 @@ A task management dashboard built with **Angular 22**. It uses standalone compon
 
 **Live Demo:** https://salmaadel66.github.io/task-management-dashboard/
 
-> The demo reads its data from [My JSON Server](https://my-json-server.typicode.com/salmaadel66/task-management-dashboard), which uses `db.json` at the repo root. Create, edit and delete requests get a response but the changes are not saved.
+> The demo has no real backend. In production builds a mock HTTP interceptor (`mock-backend.interceptor.ts`) serves `moks/db.json` from memory, so create, edit and delete work until the page is reloaded.
 
 ---
 
