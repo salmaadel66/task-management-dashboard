@@ -8,6 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "server": "json-server --watch moks/db.json --port 3000",
+    "start:api": "json-server moks/db.json --host 0.0.0.0",
     "dev": "start npm run server && ng serve",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\"",
