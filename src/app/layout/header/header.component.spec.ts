@@ -3,7 +3,6 @@ import { Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { HeaderComponent } from './header.component';
-import { LanguageService } from '../../core/services/language.service';
 
 @Component({ template: '' })
 class DummyComponent {}
@@ -12,10 +11,9 @@ describe('HeaderComponent', () => {
   let fixture: ComponentFixture<HeaderComponent>;
   let el: HTMLElement;
   let router: Router;
-  let language: { toggle: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    language = { toggle: vi.fn() };
+    localStorage.removeItem('lang');
 
     await TestBed.configureTestingModule({
       imports: [HeaderComponent],
@@ -26,7 +24,6 @@ describe('HeaderComponent', () => {
           { path: 'tasks', component: DummyComponent },
           { path: 'team', component: DummyComponent },
         ]),
-        { provide: LanguageService, useValue: language },
       ],
     }).compileComponents();
 
@@ -104,9 +101,13 @@ describe('HeaderComponent', () => {
     expect(menu.getAttribute('aria-label')).toBe('CLOSE_MENU');
   });
 
-  it('should toggle the language when the language button is clicked', () => {
+  it('should toggle the language and direction when the language button is clicked', () => {
+    expect(fixture.componentInstance.lang()).toBe('en');
+
     (el.querySelector('.l-header__actions .is-outline') as HTMLButtonElement).click();
 
-    expect(language.toggle).toHaveBeenCalled();
+    expect(fixture.componentInstance.lang()).toBe('ar');
+    expect(localStorage.getItem('lang')).toBe('ar');
+    expect(document.documentElement.dir).toBe('rtl');
   });
 });
