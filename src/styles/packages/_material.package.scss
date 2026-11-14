@@ -1,0 +1,37 @@
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Inter,
+      density: 0,
+    )
+  );
+
+  @include mat.tooltip-overrides(
+    (
+      container-color: var(--color-primary),
+      supporting-text-color: var(--color-on-primary),
+    )
+  );
+}
+
+.cdk-overlay-pane.mat-mdc-dialog-panel {
+  max-width: 95vw !important;
+
+  &.sm-dialog {
+    width: 25rem !important;
+  }
+
+  &.md-dialog {
+    width: 40rem !important;
+  }
+
+  .mat-mdc-dialog-container {
+    max-width: 100%;
+  }
+}
