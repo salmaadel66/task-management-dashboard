@@ -1,0 +1,38 @@
+<div class="l-sidebar">
+  <nav class="l-sidebar__nav" [attr.aria-label]="'MAIN_NAVIGATION' | translate">
+    @for (link of links; track link.label) {
+      @if (link.path) {
+        <a
+          class="l-sidebar__link"
+          [routerLink]="link.path"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+        >
+          <img
+            class="l-sidebar__icon"
+            [src]="'assets/images/icons/' + link.icon + '.svg'"
+            alt=""
+            width="16"
+            height="16"
+          />
+          {{ link.label | translate }}
+        </a>
+      } @else {
+        <span class="l-sidebar__link is-disabled" role="link" aria-disabled="true">
+          <img
+            class="l-sidebar__icon"
+            [src]="'assets/images/icons/' + link.icon + '.svg'"
+            alt=""
+            width="16"
+            height="16"
+          />
+          {{ link.label | translate }}
+        </span>
+      }
+    }
+  </nav>
+
+  <button class="c-button is-primary" routerLink="/tasks" [queryParams]="{ new: true }">
+    + {{ 'NEW_TASK' | translate }}
+  </button>
+</div>
