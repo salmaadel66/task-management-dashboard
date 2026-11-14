@@ -2,6 +2,10 @@
 
 A task management dashboard built with **Angular 22**. It uses standalone components, Signals, the new `httpResource` API, Angular Material and a JSON Server mock backend.
 
+**Live Demo:** https://salmaadel66.github.io/task-management-dashboard/
+
+> The demo reads its data from [My JSON Server](https://my-json-server.typicode.com/salmaadel66/task-management-dashboard), which uses `db.json` at the repo root. Create, edit and delete requests get a response but the changes are not saved.
+
 ---
 
 ## Table of Contents
