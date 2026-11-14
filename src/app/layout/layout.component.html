@@ -1,0 +1,35 @@
+<div class="l-app">
+  <app-header [menuOpen]="!isClosed()" (menuClick)="isClosed.set(!isClosed())" />
+
+  <div class="l-app__body" (keydown.escape)="isClosed.set(true)">
+    <aside
+      id="sidebar"
+      class="l-app__sidebar"
+      [class.is-closed]="isClosed()"
+      (click)="isClosed.set(true)"
+    >
+      <button
+        class="c-button is-icon l-app__close"
+        [attr.aria-label]="'CLOSE_MENU' | translate"
+        (click)="isClosed.set(true)"
+      >
+        <img
+          class="c-button__icon"
+          src="assets/images/icons/close.svg"
+          alt=""
+          width="24"
+          height="24"
+        />
+      </button>
+      <app-sidebar />
+    </aside>
+
+    @if (!isClosed()) {
+      <div class="l-app__backdrop" (click)="isClosed.set(true)"></div>
+    }
+
+    <main class="l-app__content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
