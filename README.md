@@ -47,7 +47,7 @@ The app lets a team create, organize and track tasks on a Kanban-style board, an
 - English and Arabic, with full RTL support.
 - Responsive layout from mobile to desktop, using the desktop design as the base.
 - Loading, error and retry states on every page.
-- Accessibility fixes from a Lighthouse and WCAG 2.1 AA audit.
+- Accessibility: Lighthouse accessibility score of 100 and ESLint template accessibility rules (see [Lighthouse Audit](#lighthouse-audit)).
 
 ### Tech Stack
 
@@ -77,8 +77,7 @@ src/
 │   ├── core/                       # Singletons with no UI
 │   │   ├── environments/           # environment.ts, environment.prod.ts
 │   │   ├── interceptors/           # cache, retry and mock-backend interceptors
-│   │   ├── interfaces/             # Task, User, Statistic
-│   │   └── services/               # users.service.ts (shared by Tasks and Team)
+│   │   └── interfaces/             # Task, User, Statistic
 │   ├── layout/                     # App shell: layout, header, sidebar
 │   ├── pages/                      # One lazy-loaded folder per route
 │   │   ├── dashboard/              #   + services/statistics.service.ts
@@ -94,7 +93,7 @@ moks/db.json                        # JSON Server database
 public/assets/i18n/                 # en.json, ar.json
 ```
 
-Dependencies go in one direction: `pages` → `shared` → `core`. `core` doesn't import anything from features, and `shared` doesn't know about tasks or users. A service sits inside the page folder that owns it (for example `pages/tasks/services/`). It moves to `core` only when more than one page uses it, like `UsersService`.
+Dependencies go in one direction: `pages` → `shared` → `core`. `core` doesn't import anything from features, and `shared` doesn't know about tasks or users. A service sits inside the page folder that owns it (for example `pages/tasks/services/`). Services are only used for API calls; UI logic such as switching the language stays in the component that owns it.
 
 ### Key Decisions
 
@@ -103,7 +102,7 @@ No `NgModule`s. Each page is loaded with `loadComponent`, so every route becomes
 _Trade-off:_ each component lists its own `imports`, which is more verbose but shows its dependencies explicitly.
 
 **2. Signals instead of a state library (NgRx)**
-The state is small: one task list, one user list, one statistics list and a few filters. `signal` and `computed` handle it without actions, reducers or effects.
+The state is small: one task list, one statistics list and a few filters. `signal` and `computed` handle it without actions, reducers or effects.
 _Trade-off:_ there are no Redux DevTools or time-travel debugging. If the app grows to many features sharing complex state, a Signal Store would be the next step.
 
 **3. `httpResource` for reads, `HttpClient` for writes**
@@ -211,7 +210,7 @@ GitHub Pages hosts static files only, so the live demo needs its API from somewh
 Since none of the hosted options worked, the demo uses `mock-backend.interceptor.ts`, which is registered only in production builds (`environment.production`):
 
 - The services still use `HttpClient` and `httpResource`, so the app keeps loading its data over HTTP. Every request still goes through the cache and retry interceptors.
-- The mock interceptor is last in the chain. It answers `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on `/tasks`, `/users` and `/statistics` from the data in `moks/db.json`, and returns `404` for unknown items. A short delay keeps the loading states visible.
+- The mock interceptor is last in the chain. It answers `GET`, `POST`, `PUT`, `PATCH` and `DELETE` on `/tasks` and `/statistics` from the data in `moks/db.json`, and returns `404` for unknown items. A short delay keeps the loading states visible.
 - Every change is saved to `localStorage`, so created, edited and deleted tasks stay after a reload. To reset the demo, clear the site data in the browser or run `localStorage.removeItem('mock-db')` in the console.
 - In development nothing changes: the interceptor is not registered, and the app talks to JSON Server on `http://localhost:3000`.
 - To move the demo to a real backend later, set `apiUrl` in `environment.prod.ts` and stop registering the interceptor. No service or component needs to change.
@@ -285,14 +284,14 @@ Because the card has no dependencies, it can be tested with plain inputs, and ch
 
 All state is built with Angular Signals, in four kinds:
 
-| Kind of state | API                           | Examples                                                                   |
-| ------------- | ----------------------------- | -------------------------------------------------------------------------- |
-| Server state  | `httpResource`                | `TasksService.tasks`, `UsersService.users`, `StatisticsService.statistics` |
-| UI state      | `signal`                      | `activeTab`, `selectedPriority`, `selectedAssignee`                        |
-| Derived state | `computed`                    | `filteredTasks`, `statusCounts`, `recentActivity`                          |
-| URL state     | `toSignal(route.queryParams)` | `search`, `new` (opens the "Add task" dialog)                              |
+| Kind of state | API                           | Examples                                             |
+| ------------- | ----------------------------- | ---------------------------------------------------- |
+| Server state  | `httpResource`                | `TasksService.tasks`, `StatisticsService.statistics` |
+| UI state      | `signal`                      | `activeTab`, `selectedPriority`, `selectedAssignee`  |
+| Derived state | `computed`                    | `filteredTasks`, `statusCounts`, `recentActivity`    |
+| URL state     | `toSignal(route.queryParams)` | `search`, `new` (opens the "Add task" dialog)        |
 
-**Read flow.** `TasksService.tasks` is the single source of truth. Each page derives what it needs with `computed`: the board filters it, the dashboard counts it, analytics groups it and the team page counts it per user from `UsersService.users`. Nothing is copied, so the views can't drift apart.
+**Read flow.** `TasksService.tasks` is the single source of truth. Each page derives what it needs with `computed`: the board filters it, the dashboard counts it, analytics groups it and the team page groups it by user. Nothing is copied, so the views can't drift apart.
 
 ```
                  TasksService.tasks  (httpResource<Task[]>)
@@ -414,7 +413,7 @@ Services, interceptors, the header, the team page and the confirmation dialog ar
 - **OnPush change detection on every component.** Components re-render only when an input or a signal they read changes.
 - **Lazy loading and code splitting.** Each page is a separate chunk loaded with `loadComponent`. The first load only contains the shell.
 - **Signals and `computed`.** Derived values (filters, statistics, chart data) are memoized and recalculated only when their sources change.
-- **`track` in every `@for`.** Lists are tracked by a stable key (`id` for tasks, users and statistics), so Angular updates only the items that changed instead of re-creating the list.
+- **`track` in every `@for`.** Lists are tracked by a stable key (`id` for tasks, users and statistics, or the value itself for statuses, priorities and tags), so Angular updates only the items that changed instead of re-creating the list.
 - **HTTP caching.** Moving between pages reuses cached `GET` responses instead of fetching the same data again.
 - **No memory leaks.** Long-lived subscriptions (router events, dialog results) use `takeUntilDestroyed()`. Dialog keyboard listeners end when the dialog closes. Route parameters are read with `toSignal()`, which unsubscribes automatically. One-shot HTTP calls complete on their own.
 - **Optimistic UI.** Drag and drop updates the screen before the server responds.
@@ -459,6 +458,7 @@ To run the audit again: `npx lighthouse https://salmaadel66.github.io/task-manag
 - **No coverage threshold or end-to-end tests.** Coverage is measured (83.64% statements) but not enforced, and full user flows aren't tested in a real browser.
 - **Mobile performance is 76 in Lighthouse.** See [Lighthouse Audit](#lighthouse-audit) for the reasons.
 - **Tests don't run in CI.** The GitHub Actions workflow only builds and deploys.
+- **Users come from the tasks.** There's no `/users` endpoint, so a user with no tasks can't appear in the list.
 - **Drag and drop order isn't saved.** Moving a card to another column is saved; reordering inside a column is lost after a reload, because tasks have no `order` field.
 - **Recent activity is derived from `updatedAt`**, not from a real history log. Only the latest change per task is shown.
 - **The cache has no expiry.** It's cleared on every write, but data changed by another user won't show until a write or a full page reload.
@@ -473,7 +473,8 @@ To run the audit again: `npx lighthouse https://salmaadel66.github.io/task-manag
 5. Host a real backend for the live demo and remove the mock interceptor.
 6. Add JSDoc to the complex logic: interceptors, drag and drop, and the form validators.
 7. Add a Dockerfile and `docker-compose.yml` that run the app and JSON Server together.
-8. Add an `order` field to tasks and save the position after drag and drop.
-9. Add an `/activities` endpoint that records every change.
-10. Add a time-to-live to the HTTP cache.
-11. Use `concurrently` for a cross-platform `dev` script.
+8. Add a `/users` endpoint and load the team list from it.
+9. Add an `order` field to tasks and save the position after drag and drop.
+10. Add an `/activities` endpoint that records every change.
+11. Add a time-to-live to the HTTP cache.
+12. Use `concurrently` for a cross-platform `dev` script.
