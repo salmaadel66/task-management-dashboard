@@ -1,0 +1,17 @@
+html {
+  block-size: 100%;
+}
+
+body {
+  block-size: 100%;
+  color-scheme: light;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-md);
+}
+
+button,
+input {
+  font: inherit;
+}

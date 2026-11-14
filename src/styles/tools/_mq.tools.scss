@@ -1,0 +1,26 @@
+@use 'sass:map';
+@use '../settings/breakpoints.settings' as *;
+
+@mixin mq($type: min, $dimension: w, $breakpoint-name: md) {
+  @if $type != min and $type != max {
+    @error 'mq(): $type must be min or max, got `#{$type}`.';
+  }
+
+  @if $dimension != w and $dimension != h {
+    @error 'mq(): $dimension must be w or h, got `#{$dimension}`.';
+  }
+
+  @if not map.has-key($breakpoints, $breakpoint-name) {
+    @error 'mq(): unknown breakpoint `#{$breakpoint-name}`.';
+  }
+
+  $feature: width;
+
+  @if $dimension == h {
+    $feature: height;
+  }
+
+  @media (#{$type}-#{$feature}: map.get($breakpoints, $breakpoint-name)) {
+    @content;
+  }
+}
