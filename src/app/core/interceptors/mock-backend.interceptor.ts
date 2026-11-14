@@ -8,7 +8,9 @@ interface Item {
   [key: string]: unknown;
 }
 
-const db: Record<string, Item[]> = structuredClone(data);
+const STORAGE_KEY = 'mock-db';
+
+const db: Record<string, Item[]> = loadDb();
 
 export const mockBackendInterceptor: HttpInterceptorFn = (req, next) => {
   if (!req.url.startsWith(environment.apiUrl)) {
@@ -55,8 +57,22 @@ export const mockBackendInterceptor: HttpInterceptorFn = (req, next) => {
       break;
   }
 
+  if (req.method !== 'GET') {
+    saveDb();
+  }
+
   return of(new HttpResponse({ status, body })).pipe(delay(300));
 };
+
+function loadDb(): Record<string, Item[]> {
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  return saved ? JSON.parse(saved) : structuredClone(data);
+}
+
+function saveDb(): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+}
 
 function notFound(url: string): Observable<never> {
   return throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found', url }));
