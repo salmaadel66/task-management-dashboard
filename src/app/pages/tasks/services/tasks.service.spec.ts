@@ -72,13 +72,13 @@ describe('TasksService', () => {
     expect(result).toEqual(task);
   });
 
-  it('should update a task with PATCH', () => {
+  it('should update a task with PUT', () => {
     const updated = { ...task, status: 'done' as const };
     let result: Task | undefined;
     service.updateTask('1', updated).subscribe((res) => (result = res));
 
     const req = httpMock.expectOne(`${url}/1`);
-    expect(req.request.method).toBe('PATCH');
+    expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual(updated);
     req.flush(updated);
 
